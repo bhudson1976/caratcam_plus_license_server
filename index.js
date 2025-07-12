@@ -16,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 const LICENSES_FILE = 'licenses.json';
 
 app.use(cors());
+app.use(express.static('public'));
 app.use(bodyParser.raw({ type: 'application/json' }));
 
 // Health check
