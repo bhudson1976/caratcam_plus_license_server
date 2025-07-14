@@ -56,7 +56,10 @@ app.post('/create-license', (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
+    console.log('🔎 Webhook session payload:', session);
+
     const token = session.id;
+    console.log('📦 Parsed token from session:', token);
 
     let licenses = [];
     if (fs.existsSync(LICENSES_FILE)) {
