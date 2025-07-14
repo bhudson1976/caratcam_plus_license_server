@@ -10,10 +10,11 @@ const cors = require('cors');
 const crypto = require('crypto');
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const PRICE_ID = process.env.PRICE_ID;
-
 const PORT = process.env.PORT || 3000;
 const LICENSES_FILE = 'licenses.json';
+
+// ✅ Use your actual test-mode price ID here:
+const PRICE_ID = 'price_1RkbkKCy3uw43pLE1GZrLrX7';
 
 app.use(cors());
 app.use(express.static('public'));
