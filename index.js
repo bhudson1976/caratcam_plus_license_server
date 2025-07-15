@@ -1,46 +1,28 @@
-// index.js - CaratCam Plus License Server
+// index.js - CaratCam Plus License Server (router-safe version)
 
 require('dotenv').config();
 const express = require('express');
-const app = express();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const cors = require('cors');
-const crypto = require('crypto');
 
+const app = express();
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const PORT = process.env.PORT || 3000;
 const LICENSES_FILE = 'licenses.json';
-
-// ✅ Use your actual test-mode price ID here:
 const PRICE_ID = 'price_1RkbkKCy3uw43pLE1GZrLrX7';
 
-app.use(cors());
-app.use(express.static('public'));
+// =============================================
+// ✅ 1. Stripe webhook route using raw parser
+// =============================================
+const webhookRouter = express.Router();
+webhookRouter.use(bodyParser.raw({ type: 'application/json' }));
 
-// Create Checkout Session
-app.post('/create-checkout-session', async (req, res) => {
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [{ price: PRICE_ID, quantity: 1 }],
-      success_url: 'https://www.camlabs.ai/unlocked-caratcam-plus.html?token={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://www.camlabs.ai/plus-canceled.html',
-    });
-
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error('❌ Failed to create checkout session:', err);
-    res.status(500).json({ error: 'Failed to create checkout session' });
-  }
-});
-
-// License Webhook — isolated to raw body parser
-app.post('/create-license', bodyParser.raw({ type: 'application/json' }), (req, res) => {
+webhookRouter.post('/create-license', (req, res) => {
   const sig = req.headers['stripe-signature'];
-
   let event;
+
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
     console.log('📨 Stripe event received:', event.type);
@@ -74,6 +56,37 @@ app.post('/create-license', bodyParser.raw({ type: 'application/json' }), (req, 
   res.json({ received: true });
 });
 
+app.use(webhookRouter);
+
+// =============================================
+// ✅ 2. Regular app routes use JSON body parser
+// =============================================
+app.use(cors());
+app.use(express.static('public'));
+app.use(bodyParser.json());
+
+// Health check
+app.get('/', (req, res) => {
+  res.send('✅ CaratCam Plus license server is running');
+});
+
+// Create Checkout Session
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ price: PRICE_ID, quantity: 1 }],
+      success_url: 'https://www.camlabs.ai/unlocked-caratcam-plus.html?token={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://www.camlabs.ai/plus-canceled.html',
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('❌ Failed to create checkout session:', err);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
 // Validate token
 app.get('/check-license', (req, res) => {
   const token = req.query.token;
@@ -90,11 +103,6 @@ app.get('/check-license', (req, res) => {
 
   const valid = licenses.includes(token);
   res.json({ valid });
-});
-
-// Health check
-app.get('/', (req, res) => {
-  res.send('✅ CaratCam Plus license server is running');
 });
 
 // Start server
