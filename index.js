@@ -49,6 +49,7 @@ app.post('/create-license', (req, res) => {
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    console.log('📨 Stripe event received:', event.type); // 👈 Add this line
   } catch (err) {
     console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -56,7 +57,7 @@ app.post('/create-license', (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    console.log('🔎 Webhook session payload:', session);
+    console.log('🔎 Webhook session payload:', session); // 👈 Confirm it reaches this line
 
     const token = session.id;
     console.log('📦 Parsed token from session:', token);
