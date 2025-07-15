@@ -18,12 +18,6 @@ const PRICE_ID = 'price_1RkbkKCy3uw43pLE1GZrLrX7';
 
 app.use(cors());
 app.use(express.static('public'));
-app.use(bodyParser.raw({ type: 'application/json' }));
-
-// Health check
-app.get('/', (req, res) => {
-  res.send('✅ CaratCam Plus license server is running');
-});
 
 // Create Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
@@ -42,14 +36,14 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// License Webhook
-app.post('/create-license', (req, res) => {
+// License Webhook — isolated to raw body parser
+app.post('/create-license', bodyParser.raw({ type: 'application/json' }), (req, res) => {
   const sig = req.headers['stripe-signature'];
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    console.log('📨 Stripe event received:', event.type); // 👈 Add this line
+    console.log('📨 Stripe event received:', event.type);
   } catch (err) {
     console.error('❌ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -57,7 +51,7 @@ app.post('/create-license', (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    console.log('🔎 Webhook session payload:', session); // 👈 Confirm it reaches this line
+    console.log('🔎 Webhook session payload:', session);
 
     const token = session.id;
     console.log('📦 Parsed token from session:', token);
@@ -96,6 +90,11 @@ app.get('/check-license', (req, res) => {
 
   const valid = licenses.includes(token);
   res.json({ valid });
+});
+
+// Health check
+app.get('/', (req, res) => {
+  res.send('✅ CaratCam Plus license server is running');
 });
 
 // Start server
