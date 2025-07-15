@@ -22,8 +22,8 @@ app.post('/create-checkout-session', async (req, res) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://www.camlabs.ai/unlocked-caratcam-plus.html?token={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://www.camlabs.ai/thank-you-plus.html',
+      success_url: 'https://camlabs.ai/unlocked-caratcam-plus.html?token={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://camlabs.ai/thank-you-plus.html',
     });
     res.json({ url: session.url });
   } catch (err) {
