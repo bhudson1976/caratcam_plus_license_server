@@ -13,7 +13,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.raw({ type: 'application/json' }));
 
-// ✅ Health check
 app.get('/', (req, res) => {
   res.send('✅ CaratCam Plus license server is live');
 });
@@ -76,7 +75,6 @@ app.get('/check-license', (req, res) => {
   res.json({ valid: isValid });
 });
 
-// 🚀 Start the server
 app.listen(PORT, () => {
   console.log(`🚀 CaratCam Plus license server running on port ${PORT}`);
 });
