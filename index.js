@@ -5,6 +5,8 @@ const cors = require('cors');
 const fs = require('fs');
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+console.log("✅ Redeploy triggered for Stripe + license routes");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
