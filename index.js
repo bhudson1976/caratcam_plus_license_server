@@ -11,10 +11,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.raw({ type: 'application/json' }));
 
+// ✅ Health check
 app.get('/', (req, res) => {
   res.send('✅ CaratCam Plus license server is live');
 });
 
+// 💳 Create Stripe Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const { priceId } = JSON.parse(req.body.toString());
@@ -32,6 +34,7 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+// 🧾 Stripe Webhook to issue license
 app.post('/create-license', (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
@@ -46,7 +49,10 @@ app.post('/create-license', (req, res) => {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const token = session.id;
-    const licenses = JSON.parse(fs.readFileSync('licenses.json', 'utf8'));
+    const licenses = fs.existsSync('licenses.json')
+      ? JSON.parse(fs.readFileSync('licenses.json', 'utf8'))
+      : [];
+
     if (!licenses.includes(token)) {
       licenses.push(token);
       fs.writeFileSync('licenses.json', JSON.stringify(licenses, null, 2));
@@ -57,13 +63,18 @@ app.post('/create-license', (req, res) => {
   res.status(200).send('OK');
 });
 
+// 🔐 Check license validity
 app.get('/check-license', (req, res) => {
   const token = req.query.token;
-  const licenses = JSON.parse(fs.readFileSync('licenses.json', 'utf8'));
+  const licenses = fs.existsSync('licenses.json')
+    ? JSON.parse(fs.readFileSync('licenses.json', 'utf8'))
+    : [];
+
   const isValid = licenses.includes(token);
   res.json({ valid: isValid });
 });
 
+// 🚀 Start the server
 app.listen(PORT, () => {
   console.log(`🚀 CaratCam Plus license server running on port ${PORT}`);
 });
